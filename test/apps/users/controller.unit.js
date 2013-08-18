@@ -1,4 +1,3 @@
-var restify = require('restify');
 var assert = require('assert');
 var sinon = require('sinon');
 var support = require('../../support');
