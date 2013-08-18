@@ -2,6 +2,7 @@ var assert = require('assert');
 var sinon = require('sinon');
 var support = require('../support');
 var User = main.models.User;
+var couchbase = main.couchbase.client(main.settings.couchbase);
 
 describe("User model", function () {
     var user_args;
@@ -89,6 +90,35 @@ describe("User model", function () {
                     assert.ok(result);
                     assert.equal(result.id, user.id);
                     assert.ok(result instanceof User);
+                    done();
+                });
+            });
+        });
+
+        context("when couchbase client.get() calls back with an error", function () {
+            it("bubbles up that error", function (done) {
+                var fake_err = support.fake_error();
+
+                sinon.stub(couchbase, 'get', function (args, cb) {
+                    cb(fake_err);
+                });
+
+                var fake_id = support.random.number().toString();
+
+                User.get({id: fake_id}, function (err) {
+                    assert.equal(err, fake_err);
+                    couchbase.get.restore();
+                    done();
+                });
+            });
+        });
+
+        context("when id not found", function () {
+            it("it calls back with ResourceNotFound error", function (done) {
+                var fake_id = support.random.number().toString();
+
+                User.get({id: fake_id}, function (err) {
+                    assert.equal(err.restCode, 'ResourceNotFound');
                     done();
                 });
             });
