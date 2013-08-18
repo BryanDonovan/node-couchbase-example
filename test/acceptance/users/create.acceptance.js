@@ -11,7 +11,7 @@ describe("Feature: User creation", function () {
         http_client = support.http.client();
     });
 
-    context("when an api client posts to /users with an invalid username", function () {
+    context("when an api client POSTs to /users with an invalid username", function () {
         before(function (done) {
             params = {
                 username: support.random.string() + '@#$@#$'
@@ -28,12 +28,12 @@ describe("Feature: User creation", function () {
             assert.strictEqual(raw_res.statusCode, 409);
         });
 
-        it("and the response be an InvalidArgument error", function () {
+        it("and the response should be an InvalidArgument error", function () {
             assert.equal(response.code, 'InvalidArgument');
         });
     });
 
-    context("when an api client posts to /users with a valid username", function () {
+    context("when an api client POSTs to /users with a valid username", function () {
         before(function (done) {
             params = {
                 username: support.random.string()
