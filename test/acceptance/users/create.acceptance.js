@@ -3,43 +3,57 @@ var support = require('../../support');
 
 describe("Feature: User creation", function () {
     var http_client;
+    var params;
+    var response;
+    var raw_res;
 
     before(function () {
         http_client = support.http.client();
     });
 
-    context("Scenario: using a username and password", function () {
-        context("Given a username does not already exist", function () {
-            context("When an API client POSTs to /users with a valid username and password", function () {
-                var params;
-                var response;
-                var raw_res;
+    context("when an api client posts to /users with an invalid username", function () {
+        before(function (done) {
+            params = {
+                username: support.random.string() + '@#$@#$'
+            };
 
-                before(function (done) {
-                    params = {
-                        username: support.random.string(),
-                        password: support.random.string()
-                    };
-
-                    http_client.post('/users', params, function (err, result, raw) {
-                        console.log("\nHERE\n");
-                        console.log(result);
-                        assert.ifError(err);
-                        response = result;
-                        raw_res = raw;
-                        done();
-                    });
-                });
-
-                it("Then the response code should be 200", function () {
-                    assert.strictEqual(raw_res.statusCode, 200);
-                });
-
-                it("And the response data should include the user's ID and username", function () {
-                    assert.ok(response.data.id);
-                    assert.equal(response.data.username, params.username);
-                });
+            http_client.post('/users', params, function (err, result, raw) {
+                response = result;
+                raw_res = raw;
+                done();
             });
+        });
+
+        it("then the response code should be 409", function () {
+            assert.strictEqual(raw_res.statusCode, 409);
+        });
+
+        it("and the response be an InvalidArgument error", function () {
+            assert.equal(response.code, 'InvalidArgument');
+        });
+    });
+
+    context("when an api client posts to /users with a valid username", function () {
+        before(function (done) {
+            params = {
+                username: support.random.string()
+            };
+
+            http_client.post('/users', params, function (err, result, raw) {
+                assert.ifError(err);
+                response = result;
+                raw_res = raw;
+                done();
+            });
+        });
+
+        it("then the response code should be 200", function () {
+            assert.strictEqual(raw_res.statusCode, 200);
+        });
+
+        it("and the response data should include the user's id and username", function () {
+            assert.ok(response.data.id);
+            assert.equal(response.data.username, params.username);
         });
     });
 });
