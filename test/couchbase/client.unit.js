@@ -13,6 +13,12 @@ describe("lib/couchbase/client.js",  function () {
         val = support.random.string();
     });
 
+    afterEach(function (done) {
+        couchbase.del(key, function () {
+            done(); // ignore errors
+        });
+    });
+
     describe("set()",  function () {
         context("when key is null", function () {
             beforeEach(function () {
@@ -154,6 +160,96 @@ describe("lib/couchbase/client.js",  function () {
 
             it("calls back with the connection error", function (done) {
                 couchbase.get(key, function (err) {
+                    assert.equal(err, fake_err);
+                    done();
+                });
+            });
+        });
+    });
+
+    describe("del()", function () {
+        context("when record exists", function () {
+            beforeEach(function (done) {
+                couchbase.set(key, val, done);
+            });
+
+            it("returns null", function (done) {
+                couchbase.del(key, function (err, result) {
+                    assert.ifError(err);
+                    assert.strictEqual(result, null);
+                    done();
+                });
+            });
+
+            it("removes the record", function (done) {
+                couchbase.del(key, function (err) {
+                    assert.ifError(err);
+
+                    couchbase.get(key, function (err, result) {
+                        assert.ifError(err);
+                        assert.strictEqual(result, null);
+                        done();
+                    });
+                });
+            });
+
+            context("and record is a number", function () {
+                beforeEach(function (done) {
+                    key = support.random.number();
+                    couchbase.set(key, val, done);
+                });
+
+                it("removes the record", function (done) {
+                    couchbase.del(key, function (err) {
+                        assert.ifError(err);
+
+                        couchbase.get(key, function (err, result) {
+                            assert.ifError(err);
+                            assert.strictEqual(result, null);
+                            done();
+                        });
+                    });
+                });
+            });
+
+            context("and key is null", function () {
+                beforeEach(function () {
+                    key = null;
+                });
+
+                it("returns 'key is not a string' error", function (done) {
+                    couchbase.del(key, function (err) {
+                        assert.ok(err.message.match(/key is not a string/i));
+                        done();
+                    });
+                });
+            });
+        });
+
+        context("when record does not exist", function () {
+            it("returns null", function (done) {
+                couchbase.del(key, function (err, result) {
+                    assert.ifError(err);
+                    assert.strictEqual(result, null);
+                    done();
+                });
+            });
+        });
+
+        context("when connect() errors", function () {
+            beforeEach(function () {
+                fake_err = support.fake_error();
+                sinon.stub(couchbase, 'connect', function (cb) {
+                    cb(fake_err);
+                });
+            });
+
+            afterEach(function () {
+                couchbase.connect.restore();
+            });
+
+            it("calls back with the connection error", function (done) {
+                couchbase.del(key, function (err) {
                     assert.equal(err, fake_err);
                     done();
                 });

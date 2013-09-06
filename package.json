@@ -1,6 +1,6 @@
 {
     "name": "node-couchbase-example",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "Node.js Couchbase Example",
     "author": "Bryan Donovan",
     "engines": {
