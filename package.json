@@ -11,7 +11,7 @@
         "async": "0.2.9",
         "bunyan": "0.21.4",
         "cli-color": "0.2.2",
-        "couchbase": "0.1.0",
+        "couchbase": "git+https://github.com/couchbase/couchnode.git",
         "generic-pool": "2.0.4",
         "optimist" : "0.6.0",
         "restify": "2.6.0",

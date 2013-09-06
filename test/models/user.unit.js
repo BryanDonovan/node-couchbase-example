@@ -2,7 +2,7 @@ var assert = require('assert');
 var sinon = require('sinon');
 var support = require('../support');
 var User = main.models.User;
-var couchbase = main.couchbase.client(main.settings.couchbase);
+var couchbase = main.couchbase.client(main.settings.couchbase.connection);
 
 describe("User model", function () {
     var user_args;
