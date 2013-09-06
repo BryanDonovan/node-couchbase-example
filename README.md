@@ -17,6 +17,8 @@ An example [Couchbase](http://couchbase.com/) Node.js example using [couchnode](
 
 ## Setup
 
+Note: Requires Couchbase 2.1.x or greater.
+
 Assuming you already have NodeJS 0.10.13 (it will probably work with older
     versions as well) or higher installed:
 
