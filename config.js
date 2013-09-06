@@ -7,15 +7,17 @@ module.exports = {
         apps: {
             users: {
                 port: 12100,
-                proxies: 2
+                proxies: 1
             }
         },
 
         couchbase: {
-            hosts: ['localhost:8091'],
-            user: 'Administrator',
-            password: 'password',
-            bucket: 'default',
+            connection: {
+                host: 'localhost:8091',
+                //user: 'Administrator',
+                //password: 'password',
+                bucket: 'default',
+            },
             views: {
                 'default': {
                     users: {
