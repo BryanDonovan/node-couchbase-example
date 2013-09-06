@@ -11,7 +11,7 @@ describe("Feature: Fetching a user", function () {
         http_client = support.http.client();
     });
 
-    context("given a user exists", function () {
+    context("Given a user exists", function () {
         var user;
 
         before(function (done) {
@@ -26,7 +26,7 @@ describe("Feature: Fetching a user", function () {
             });
         });
 
-        context("when an api client requests GET /users/:id with an invalid id", function () {
+        context("When an api client requests GET /users/:id with an invalid id", function () {
             before(function (done) {
                 var fake_id = 'invalid123';
 
@@ -37,16 +37,16 @@ describe("Feature: Fetching a user", function () {
                 });
             });
 
-            it("then the response code should be 404", function () {
+            it("Then the response code should be 404", function () {
                 assert.strictEqual(raw_res.statusCode, 404);
             });
 
-            it("and the response be an ResourceNotFound error", function () {
+            it("And the response should be a ResourceNotFound error", function () {
                 assert.equal(response.code, 'ResourceNotFound');
             });
         });
 
-        context("when an api client requests GET /users/:id with a valid id", function () {
+        context("When an api client requests GET /users/:id with a valid id", function () {
             before(function (done) {
                 http_client.get('/users/' + user.id, function (err, result, raw) {
                     assert.ifError(err);
@@ -56,11 +56,11 @@ describe("Feature: Fetching a user", function () {
                 });
             });
 
-            it("then the response code should be 200", function () {
+            it("Then the response code should be 200", function () {
                 assert.strictEqual(raw_res.statusCode, 200);
             });
 
-            it("and the response data should have the user data", function () {
+            it("And the response data should have the user data", function () {
                 assert.equal(response.data.id, user.id);
             });
         });
