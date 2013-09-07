@@ -8,7 +8,10 @@ describe("User model", function () {
     var user_args;
 
     beforeEach(function () {
-        user_args = {username: support.random.string()};
+        user_args = {
+            username: support.random.string(),
+            email: support.random.email()
+        };
     });
 
     describe("instantiating", function () {
@@ -53,6 +56,30 @@ describe("User model", function () {
 
                 User.create(user_args, function (err) {
                     assert.equal(err.restCode, 'InvalidArgument');
+                    assert.ok(err.message.match(/username/i));
+                    done();
+                });
+            });
+        });
+
+        context("when no email provided", function () {
+            it("calls back with a MissingParameter error", function (done) {
+                delete user_args.email;
+
+                User.create(user_args, function (err) {
+                    assert.equal(err.restCode, 'MissingParameter');
+                    done();
+                });
+            });
+        });
+
+        context("when email is invalid", function () {
+            it("calls back with an InvalidArgument error", function (done) {
+                user_args.email = 'foo.bar.com';
+
+                User.create(user_args, function (err) {
+                    assert.equal(err.restCode, 'InvalidArgument');
+                    assert.ok(err.message.match(/email/i));
                     done();
                 });
             });

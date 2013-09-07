@@ -1,6 +1,13 @@
 var assert = require('assert');
 var support = require('../../support');
 
+function valid_params() {
+    return {
+        username: support.random.string(),
+        email: support.random.email()
+    };
+}
+
 describe("Feature: Fetching a user", function () {
     var http_client;
     var params;
@@ -15,9 +22,7 @@ describe("Feature: Fetching a user", function () {
         var user;
 
         before(function (done) {
-            params = {
-                username: support.random.string()
-            };
+            params = valid_params();
 
             http_client.post('/users', params, function (err, result) {
                 assert.ifError(err);
