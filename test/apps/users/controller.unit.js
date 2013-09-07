@@ -22,7 +22,7 @@ describe("users/controller.js", function () {
         var params;
 
         beforeEach(function () {
-            params = {username: support.random.string(), password: support.random.string()};
+            params = {username: support.random.string(), email: support.random.email()};
         });
 
         it("passes params to User model", function (done) {
@@ -85,6 +85,56 @@ describe("users/controller.js", function () {
                 http_client.get('/users/' + id, function (err, result) {
                     assert.equal(result.message, fake_err.message);
                     User.get.restore();
+                    done();
+                });
+            });
+        });
+    });
+
+    describe("PUT /users/:id", function () {
+        var params;
+        var user_id;
+        var expected_update_args;
+
+        beforeEach(function () {
+            user_id = support.random.number().toString();
+
+            params = {
+                username: support.random.string(),
+                email: support.random.email()
+            };
+
+            expected_update_args = {
+                id: user_id,
+                username: params.username,
+                email: params.email
+            };
+        });
+
+        it("passes params to User model", function (done) {
+            sinon.stub(User, 'update', function (args, cb) {
+                cb(null, {});
+            });
+
+            http_client.put('/users/' + user_id, params, function (err) {
+                assert.ifError(err);
+                assert.ok(User.update.calledWith(expected_update_args));
+                User.update.restore();
+                done();
+            });
+        });
+
+        context("when model returns an error", function () {
+            it("responds with the error", function (done) {
+                var fake_err = support.fake_error();
+                sinon.stub(User, 'update', function (args, cb) {
+                    cb(fake_err, {});
+                });
+
+                http_client.put('/users/' + user_id, params, function (err, result) {
+                    assert.ok(User.update.calledWith(expected_update_args));
+                    assert.equal(result.message, fake_err.message);
+                    User.update.restore();
                     done();
                 });
             });

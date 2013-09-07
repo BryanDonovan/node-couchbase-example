@@ -140,12 +140,162 @@ describe("User model", function () {
             });
         });
 
+        context("when id not provided", function () {
+            it("it calls back with MissingParameter error", function (done) {
+                User.get({}, function (err) {
+                    assert.equal(err.restCode, 'MissingParameter');
+                    assert.ok(err.message.match(/id/i));
+                    done();
+                });
+            });
+        });
+
         context("when id not found", function () {
             it("it calls back with ResourceNotFound error", function (done) {
                 var fake_id = support.random.number().toString();
 
                 User.get({id: fake_id}, function (err) {
                     assert.equal(err.restCode, 'ResourceNotFound');
+                    done();
+                });
+            });
+        });
+    });
+
+    describe("update()", function () {
+        var user;
+        var update_args;
+
+        beforeEach(function (done) {
+            User.create(user_args, function (err, result) {
+                assert.ifError(err);
+                user = result;
+
+                update_args = {
+                    id: user.id
+                };
+
+                done();
+            });
+        });
+
+        context("when no id provided", function () {
+            it("calls back with a MissingParameter error", function (done) {
+                delete update_args.id;
+
+                User.update(update_args, function (err) {
+                    assert.equal(err.restCode, 'MissingParameter');
+                    assert.ok(err.message.match(/id/i));
+                    done();
+                });
+            });
+        });
+
+        context("when user not found", function () {
+            it("calls back with a ResourceNotFound error", function (done) {
+                update_args.id = support.random.number();
+
+                User.update(update_args, function (err) {
+                    assert.equal(err.restCode, 'ResourceNotFound');
+                    done();
+                });
+            });
+        });
+
+        context("when args are valid", function () {
+            beforeEach(function () {
+                update_args.username = support.random.string();
+                update_args.email = support.random.email();
+            });
+
+            context("when new username and email are provided", function () {
+                it("updates username and email", function (done) {
+                    User.update(update_args, function (err, result) {
+                        assert.ifError(err);
+                        assert.equal(result, true);
+
+                        User.get({id: user.id}, function (err, updated_user) {
+                            assert.ifError(err);
+                            assert.equal(updated_user.username, update_args.username);
+                            assert.equal(updated_user.email, update_args.email);
+                            done();
+                        });
+                    });
+                });
+            });
+
+            context("when only id and username are provided", function () {
+                it("updates the username, not email", function (done) {
+                    delete update_args.email;
+
+                    User.update(update_args, function (err, result) {
+                        assert.ifError(err);
+                        assert.equal(result, true);
+
+                        User.get({id: user.id}, function (err, updated_user) {
+                            assert.ifError(err);
+                            assert.equal(updated_user.username, update_args.username);
+                            assert.equal(updated_user.email, user.email);
+                            done();
+                        });
+                    });
+                });
+            });
+
+            context("when only id and email are provided", function () {
+                it("updates the email, not username", function (done) {
+                    delete update_args.username;
+
+                    User.update(update_args, function (err, result) {
+                        assert.ifError(err);
+                        assert.equal(result, true);
+
+                        User.get({id: user.id}, function (err, updated_user) {
+                            assert.ifError(err);
+                            assert.equal(updated_user.username, user.username);
+                            assert.equal(updated_user.email, update_args.email);
+                            done();
+                        });
+                    });
+                });
+            });
+        });
+
+        context("when username contains non-allowed characters", function () {
+            it("calls back with an InvalidArgument error", function (done) {
+                update_args.username = '@#$@#$foo';
+
+                User.update(update_args, function (err) {
+                    assert.equal(err.restCode, 'InvalidArgument');
+                    assert.ok(err.message.match(/username/i));
+                    done();
+                });
+            });
+        });
+
+        context("when email is invalid", function () {
+            it("calls back with an InvalidArgument error", function (done) {
+                update_args.email = 'foo.bar.com';
+
+                User.update(update_args, function (err) {
+                    assert.equal(err.restCode, 'InvalidArgument');
+                    assert.ok(err.message.match(/email/i));
+                    done();
+                });
+            });
+        });
+
+        context("when couchbase client.set() calls back with an error", function () {
+            it("bubbles up that error", function (done) {
+                var fake_err = support.fake_error();
+
+                sinon.stub(couchbase, 'set', function (key, args, cb) {
+                    cb(fake_err);
+                });
+
+                User.update(update_args, function (err) {
+                    assert.equal(err, fake_err);
+                    couchbase.set.restore();
                     done();
                 });
             });
