@@ -301,4 +301,77 @@ describe("User model", function () {
             });
         });
     });
+
+    describe("destroy()", function () {
+        context("when user exists", function () {
+            var user;
+
+            beforeEach(function (done) {
+                User.create(user_args, function (err, result) {
+                    assert.ifError(err);
+                    user = result;
+                    done();
+                });
+            });
+
+            it("returns true", function (done) {
+                User.destroy({id: user.id}, function (err, result) {
+                    assert.ifError(err);
+                    assert.strictEqual(result, true);
+                    done();
+                });
+            });
+
+            it("removes the record", function (done) {
+                User.destroy({id: user.id}, function (err) {
+                    assert.ifError(err);
+
+                    User.get({id: user.id}, function (err) {
+                        assert.equal(err.restCode, 'ResourceNotFound');
+                        done();
+                    });
+                });
+            });
+        });
+
+        context("when couchbase client.del() calls back with an error", function () {
+            it("bubbles up that error", function (done) {
+                var fake_err = support.fake_error();
+
+                sinon.stub(couchbase, 'del', function (args, cb) {
+                    cb(fake_err);
+                });
+
+                var fake_id = support.random.number().toString();
+
+                User.destroy({id: fake_id}, function (err) {
+                    assert.equal(err, fake_err);
+                    couchbase.del.restore();
+                    done();
+                });
+            });
+        });
+
+        context("when id not provided", function () {
+            it("it calls back with MissingParameter error", function (done) {
+                User.destroy({}, function (err) {
+                    assert.equal(err.restCode, 'MissingParameter');
+                    assert.ok(err.message.match(/id/i));
+                    done();
+                });
+            });
+        });
+
+        context("when id not found", function () {
+            it("it calls back with true (we don't care, for now at least)", function (done) {
+                var fake_id = support.random.number().toString();
+
+                User.destroy({id: fake_id}, function (err, result) {
+                    assert.ifError(err);
+                    assert.strictEqual(result, true);
+                    done();
+                });
+            });
+        });
+    });
 });

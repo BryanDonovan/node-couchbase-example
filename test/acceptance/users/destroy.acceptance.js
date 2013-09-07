@@ -42,22 +42,21 @@ describe("Feature: Destroying a user", function () {
                 });
             });
 
-            it("Then the response code should be 404", function () {
-                assert.strictEqual(raw_res.statusCode, 404);
-            });
-
-            it("And the response should be a ResourceNotFound error", function () {
-                assert.equal(response.code, 'ResourceNotFound');
+            it("Then the response code should be 200", function () {
+                assert.strictEqual(raw_res.statusCode, 200);
             });
         });
 
         context("When an api client requests DELETE /users/:id with a valid id", function () {
             before(function (done) {
-                http_client.get('/users/' + user.id, function (err, result, raw) {
+                http_client.get('/users/' + user.id, function (err) {
                     assert.ifError(err);
-                    response = result;
-                    raw_res = raw;
-                    done();
+
+                    http_client.del('/users/' + user.id, function (err, result, raw) {
+                        response = result;
+                        raw_res = raw;
+                        done();
+                    });
                 });
             });
 
@@ -67,7 +66,7 @@ describe("Feature: Destroying a user", function () {
 
             it("And the user record should no longer be available", function (done) {
                 http_client.get('/users/' + user.id, function (err, result) {
-                    assert.equal(response.code, 'ResourceNotFound');
+                    assert.equal(result.code, 'ResourceNotFound');
                     done();
                 });
             });
