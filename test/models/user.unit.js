@@ -93,7 +93,8 @@ describe("User model", function () {
                     assert.ok(result.id);
                     assert.equal(result.username, user_args.username);
                     assert.ok(result instanceof User);
-                    done();
+
+                    User.destroy(result, done);
                 });
             });
         });
@@ -109,6 +110,10 @@ describe("User model", function () {
                     user = result;
                     done();
                 });
+            });
+
+            afterEach(function (done) {
+                User.destroy(user, done);
             });
 
             it("returns the user record", function (done) {
@@ -177,6 +182,10 @@ describe("User model", function () {
 
                 done();
             });
+        });
+
+        afterEach(function (done) {
+            User.destroy(user, done);
         });
 
         context("when no id provided", function () {

@@ -19,6 +19,10 @@ describe("Feature: User updating", function () {
         http_client = support.http.client();
     });
 
+    after(function (done) {
+        http_client.del('/users/' + user.id, done);
+    });
+
     context("Given a user exists", function () {
         before(function (done) {
             params = valid_params();

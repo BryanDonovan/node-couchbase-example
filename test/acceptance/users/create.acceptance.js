@@ -63,6 +63,8 @@ describe("Feature: User creation", function () {
     });
 
     context("When an api client POSTs to /users with a valid username and email", function () {
+        var user;
+
         before(function (done) {
             params = valid_params();
 
@@ -70,8 +72,13 @@ describe("Feature: User creation", function () {
                 assert.ifError(err);
                 response = result;
                 raw_res = raw;
+                user = response.data;
                 done();
             });
+        });
+
+        after(function (done) {
+            http_client.del('/users/' + user.id, done);
         });
 
         it("Then the response code should be 200", function () {

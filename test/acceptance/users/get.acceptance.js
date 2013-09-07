@@ -31,6 +31,10 @@ describe("Feature: Fetching a user", function () {
             });
         });
 
+        after(function (done) {
+            http_client.del('/users/' + user.id, done);
+        });
+
         context("When an api client requests GET /users/:id with an invalid id", function () {
             before(function (done) {
                 var fake_id = 'invalid123';
