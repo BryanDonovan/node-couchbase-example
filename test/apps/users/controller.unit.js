@@ -140,4 +140,40 @@ describe("users/controller.js", function () {
             });
         });
     });
+
+    describe("DELETE /users/:id", function () {
+        var id;
+
+        beforeEach(function () {
+            id = support.random.number();
+        });
+
+        it("passes id to User model", function (done) {
+            sinon.stub(User, 'destroy', function (args, cb) {
+                cb(null, {});
+            });
+
+            http_client.del('/users/' + id, function (err) {
+                assert.ifError(err);
+                assert.ok(User.destroy.calledWith({id: id.toString()}));
+                User.destroy.restore();
+                done();
+            });
+        });
+
+        context("when model returns an error", function () {
+            it("responds with the error", function (done) {
+                var fake_err = support.fake_error();
+                sinon.stub(User, 'destroy', function (args, cb) {
+                    cb(fake_err);
+                });
+
+                http_client.del('/users/' + id, function (err, result) {
+                    assert.equal(result.message, fake_err.message);
+                    User.destroy.restore();
+                    done();
+                });
+            });
+        });
+    });
 });
