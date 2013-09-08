@@ -227,7 +227,7 @@ describe("User model", function () {
         });
 
         context("when id not provided", function () {
-            it("it calls back with MissingParameter error", function (done) {
+            it("calls back with MissingParameter error", function (done) {
                 User.get({}, function (err) {
                     assert.equal(err.restCode, 'MissingParameter');
                     assert.ok(err.message.match(/id/i));
@@ -237,7 +237,7 @@ describe("User model", function () {
         });
 
         context("when id not found", function () {
-            it("it calls back with ResourceNotFound error", function (done) {
+            it("calls back with ResourceNotFound error", function (done) {
                 var fake_id = support.random.number().toString();
 
                 User.get({id: fake_id}, function (err) {
@@ -621,7 +621,7 @@ describe("User model", function () {
         });
 
         context("when id not provided", function () {
-            it("it calls back with MissingParameter error", function (done) {
+            it("calls back with MissingParameter error", function (done) {
                 User.destroy({}, function (err) {
                     assert.equal(err.restCode, 'MissingParameter');
                     assert.ok(err.message.match(/id/i));
@@ -631,7 +631,7 @@ describe("User model", function () {
         });
 
         context("when id not found", function () {
-            it("it calls back ResourceNotFound error", function (done) {
+            it("calls back with ResourceNotFound error", function (done) {
                 var fake_id = support.random.number().toString();
 
                 User.destroy({id: fake_id}, function (err) {
