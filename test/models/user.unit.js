@@ -358,6 +358,30 @@ describe("User model", function () {
                         });
                     });
                 });
+
+                it("doesn't leave dangling references", function (done) {
+                    var orig_username_key = User._make_key('username', user.username);
+                    var orig_email_key = User._make_key('email', user.email);
+
+                    User.update(update_args, function (err) {
+                        assert.ifError(err);
+
+                        couchbase.get(orig_username_key, function (err, result) {
+                            assert.ifError(err);
+                            assert.strictEqual(result, null);
+
+                            couchbase.get(orig_email_key, function (err, result) {
+                                assert.ifError(err);
+                                assert.strictEqual(result, null);
+                                done();
+                            });
+                        });
+                    });
+                });
+
+                it.skip("creates new references", function (done) {
+                    done();
+                });
             });
 
             context("when only id and username are provided", function () {

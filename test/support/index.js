@@ -4,16 +4,7 @@ var support = {
     http: require('./http'),
     random: require('./random'),
     walk_dir: require('./walk_dir'),
-
-    shallow_clone: function (object) {
-        var ret = {};
-        if (object) {
-            Object.keys(object).forEach(function (val) {
-                ret[val] = object[val];
-            });
-        }
-        return ret;
-    },
+    shallow_clone: main.utils.shallow_clone,
 
     fake_error: function (message) {
         return new Error(message || support.random.string());
