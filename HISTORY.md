@@ -1,3 +1,6 @@
+- 0.0.4 2013-09-08
+  - Checking CAS in User.update().
+
 - 0.0.3 2013-09-07
   - Added User.update() and User.destroy().
 
