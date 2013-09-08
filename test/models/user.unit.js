@@ -99,6 +99,34 @@ describe("User model", function () {
                 });
             });
         });
+
+        context("when email already taken by another user", function () {
+            it("calls back with ResourceAlreadyExists", function (done) {
+                User.create(user_args, function (err) {
+                    assert.ifError(err);
+                    user_args.username = support.random.string();
+
+                    User.create(user_args, function (err) {
+                        assert.equal(err.restCode, 'ResourceAlreadyExists');
+                        done();
+                    });
+                });
+            });
+        });
+
+        context("when username already taken by another user", function () {
+            it("calls back with ResourceAlreadyExists", function (done) {
+                User.create(user_args, function (err) {
+                    assert.ifError(err);
+                    user_args.email = support.random.string();
+
+                    User.create(user_args, function (err) {
+                        assert.equal(err.restCode, 'ResourceAlreadyExists');
+                        done();
+                    });
+                });
+            });
+        });
     });
 
     describe("get()", function () {
