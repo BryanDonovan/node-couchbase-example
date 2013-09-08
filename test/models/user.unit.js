@@ -550,22 +550,41 @@ describe("User model", function () {
                     });
                 });
             });
-        });
 
-        context("when couchbase client.del() calls back with an error", function () {
-            it("bubbles up that error", function (done) {
-                var fake_err = support.fake_error();
+            it("doesn't leave dangling references", function (done) {
+                User.destroy({id: user.id}, function (err) {
+                    assert.ifError(err);
 
-                sinon.stub(couchbase, 'del', function (args, cb) {
-                    cb(fake_err);
+                    var username_key = User._make_key('username', user_args.username);
+                    var email_key = User._make_key('email', user_args.email);
+
+                    couchbase.get(username_key, function (err, result) {
+                        assert.ifError(err);
+                        assert.strictEqual(result, null);
+
+                        couchbase.get(email_key, function (err, result) {
+                            assert.ifError(err);
+                            assert.strictEqual(result, null);
+                            done();
+                        });
+                    });
                 });
+            });
 
-                var fake_id = support.random.number().toString();
+            context("when couchbase client.del() calls back with an error", function () {
+                it("bubbles up that error", function (done) {
+                    var fake_err = support.fake_error();
 
-                User.destroy({id: fake_id}, function (err) {
-                    assert.equal(err, fake_err);
-                    couchbase.del.restore();
-                    done();
+                    sinon.stub(couchbase, 'del', function (args, cb) {
+                        cb(fake_err);
+                    });
+
+                    User.destroy({id: user.id}, function (err) {
+                        assert.equal(err, fake_err);
+                        couchbase.del.restore();
+
+                        User.destroy({id: user.id}, done); // cleanup
+                    });
                 });
             });
         });
@@ -581,12 +600,11 @@ describe("User model", function () {
         });
 
         context("when id not found", function () {
-            it("it calls back with true (we don't care, for now at least)", function (done) {
+            it("it calls back ResourceNotFound error", function (done) {
                 var fake_id = support.random.number().toString();
 
-                User.destroy({id: fake_id}, function (err, result) {
-                    assert.ifError(err);
-                    assert.strictEqual(result, true);
+                User.destroy({id: fake_id}, function (err) {
+                    assert.equal(err.restCode, 'ResourceNotFound');
                     done();
                 });
             });
