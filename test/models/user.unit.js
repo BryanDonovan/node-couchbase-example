@@ -5,6 +5,22 @@ var support = require('../support');
 var User = main.models.User;
 var couchbase = main.couchbase.client(main.settings.couchbase.connection);
 
+function assert_no_dangling_references(user, cb) {
+    var username_key = User._make_key('username', user.username);
+    var email_key = User._make_key('email', user.email);
+
+    couchbase.get(username_key, function (err, result) {
+        assert.ifError(err);
+        assert.strictEqual(result, null);
+
+        couchbase.get(email_key, function (err, result) {
+            assert.ifError(err);
+            assert.strictEqual(result, null);
+            cb();
+        });
+    });
+}
+
 describe("User model", function () {
     var user_args;
 
@@ -360,22 +376,9 @@ describe("User model", function () {
                 });
 
                 it("doesn't leave dangling references", function (done) {
-                    var orig_username_key = User._make_key('username', user.username);
-                    var orig_email_key = User._make_key('email', user.email);
-
                     User.update(update_args, function (err) {
                         assert.ifError(err);
-
-                        couchbase.get(orig_username_key, function (err, result) {
-                            assert.ifError(err);
-                            assert.strictEqual(result, null);
-
-                            couchbase.get(orig_email_key, function (err, result) {
-                                assert.ifError(err);
-                                assert.strictEqual(result, null);
-                                done();
-                            });
-                        });
+                        assert_no_dangling_references(user, done);
                     });
                 });
 
@@ -510,20 +513,7 @@ describe("User model", function () {
                             assert.equal(updated_user.username, username);
                             assert.equal(updated_user.email, email);
 
-                            // Make sure no dangling reference docs were left behind.
-                            var orig_username_key = User._make_key('username', user.username);
-                            var orig_email_key = User._make_key('email', user.email);
-
-                            couchbase.get(orig_username_key, function (err, result) {
-                                assert.ifError(err);
-                                assert.strictEqual(result, null);
-
-                                couchbase.get(orig_email_key, function (err, result) {
-                                    assert.ifError(err);
-                                    assert.strictEqual(result, null);
-                                    async_cb();
-                                });
-                            });
+                            assert_no_dangling_references(user, async_cb);
                         });
                     });
                 }, done);
@@ -608,20 +598,7 @@ describe("User model", function () {
             it("doesn't leave dangling references", function (done) {
                 User.destroy({id: user.id}, function (err) {
                     assert.ifError(err);
-
-                    var username_key = User._make_key('username', user_args.username);
-                    var email_key = User._make_key('email', user_args.email);
-
-                    couchbase.get(username_key, function (err, result) {
-                        assert.ifError(err);
-                        assert.strictEqual(result, null);
-
-                        couchbase.get(email_key, function (err, result) {
-                            assert.ifError(err);
-                            assert.strictEqual(result, null);
-                            done();
-                        });
-                    });
+                    assert_no_dangling_references(user_args, done);
                 });
             });
 
