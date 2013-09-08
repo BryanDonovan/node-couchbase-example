@@ -5,17 +5,21 @@ var couchbase = main.couchbase.client(main.settings.couchbase.connection);
 
 describe("lib/couchbase/client.js",  function () {
     var key;
+    var orig_key;
     var val;
     var fake_err;
 
     beforeEach(function () {
         key = support.random.string();
+        orig_key = key;
         val = support.random.string();
     });
 
     afterEach(function (done) {
         couchbase.del(key, function () {
-            done(); // ignore errors
+            couchbase.del(orig_key, function () {
+                done(); // ignore errors
+            });
         });
     });
 
@@ -239,12 +243,8 @@ describe("lib/couchbase/client.js",  function () {
             });
 
             context("and key is null", function () {
-                beforeEach(function () {
-                    key = null;
-                });
-
                 it("returns 'key is not a string' error", function (done) {
-                    couchbase.del(key, function (err) {
+                    couchbase.del(null, function (err) {
                         assert.ok(err.message.match(/key is not a string/i));
                         done();
                     });
