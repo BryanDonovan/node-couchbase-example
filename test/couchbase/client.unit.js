@@ -25,10 +25,15 @@ describe("lib/couchbase/client.js",  function () {
                 key = null;
             });
 
-            it("returns 'key is not a string' error", function (done) {
+            it("returns 'key invalid' error", function (done) {
                 couchbase.set(key, val, function (err) {
-                    assert.ok(err.message.match(/key is not a string/i));
-                    done();
+                    assert.ok(err.message.match(/invalid key/i));
+
+                    couchbase.get('null', function (err, result) {
+                        assert.ifError(err);
+                        assert.strictEqual(result, null);
+                        done();
+                    });
                 });
             });
         });
