@@ -42,8 +42,9 @@ describe("Feature: Destroying a user", function () {
                 });
             });
 
-            it("Then the response code should be 200", function () {
-                assert.strictEqual(raw_res.statusCode, 200);
+            it("Then the response code should be 404", function () {
+                assert.strictEqual(raw_res.statusCode, 404);
+                assert.equal(response.code, 'ResourceNotFound');
             });
         });
 

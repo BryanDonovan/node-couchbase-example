@@ -379,8 +379,24 @@ describe("User model", function () {
                     });
                 });
 
-                it.skip("creates new references", function (done) {
-                    done();
+                it("creates new references", function (done) {
+                    User.update(update_args, function (err) {
+                        assert.ifError(err);
+
+                        var username_key = User._make_key('username', update_args.username);
+                        var email_key = User._make_key('email', update_args.email);
+
+                        couchbase.get(username_key, function (err, result) {
+                            assert.ifError(err);
+                            assert.strictEqual(result.value, user.id);
+
+                            couchbase.get(email_key, function (err, result) {
+                                assert.ifError(err);
+                                assert.strictEqual(result.value, user.id);
+                                done();
+                            });
+                        });
+                    });
                 });
             });
 
