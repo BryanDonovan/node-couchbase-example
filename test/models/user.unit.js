@@ -477,9 +477,9 @@ describe("User model", function () {
             });
         });
 
-        context("when updating the same user multiple times, simultaneously", function () {
+        context("when making multiple simultaneous updates to a user", function () {
             it("the correct values should be saved each time", function (done) {
-                var nbr_of_runs = 2;
+                var nbr_of_runs = 10;
                 var runs = [];
 
                 for (var i = 0; i < nbr_of_runs; i++) {
