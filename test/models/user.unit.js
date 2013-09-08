@@ -100,29 +100,33 @@ describe("User model", function () {
             });
         });
 
-        context("when email already taken by another user", function () {
-            it("calls back with ResourceAlreadyExists", function (done) {
-                User.create(user_args, function (err) {
-                    assert.ifError(err);
-                    user_args.username = support.random.string();
-
+        context("uniqueneness constraints", function () {
+            context("when email already taken by another user", function () {
+                it("calls back with ResourceAlreadyExists", function (done) {
                     User.create(user_args, function (err) {
-                        assert.equal(err.restCode, 'ResourceAlreadyExists');
-                        done();
+                        assert.ifError(err);
+                        user_args.username = support.random.string();
+
+                        User.create(user_args, function (err) {
+                            assert.equal(err.restCode, 'ResourceAlreadyExists');
+                            assert.ok(err.message.match(/email/));
+                            done();
+                        });
                     });
                 });
             });
-        });
 
-        context("when username already taken by another user", function () {
-            it("calls back with ResourceAlreadyExists", function (done) {
-                User.create(user_args, function (err) {
-                    assert.ifError(err);
-                    user_args.email = support.random.string();
-
+            context("when username already taken by another user", function () {
+                it("calls back with ResourceAlreadyExists", function (done) {
                     User.create(user_args, function (err) {
-                        assert.equal(err.restCode, 'ResourceAlreadyExists');
-                        done();
+                        assert.ifError(err);
+                        user_args.email = support.random.email();
+
+                        User.create(user_args, function (err) {
+                            assert.equal(err.restCode, 'ResourceAlreadyExists');
+                            assert.ok(err.message.match(/username/));
+                            done();
+                        });
                     });
                 });
             });
@@ -190,6 +194,68 @@ describe("User model", function () {
 
                 User.get({id: fake_id}, function (err) {
                     assert.equal(err.restCode, 'ResourceNotFound');
+                    done();
+                });
+            });
+        });
+    });
+
+    describe("get_by_username()", function () {
+        var user;
+
+        context("when user does not exist", function () {
+            it("calls back with ResourceNotFound error", function (done) {
+                User.get_by_username(user_args.username, function (err) {
+                    assert.equal(err.restCode, 'ResourceNotFound');
+                    done();
+                });
+            });
+        });
+
+        context("when user exists", function () {
+            beforeEach(function (done) {
+                User.create(user_args, function (err, result) {
+                    assert.ifError(err);
+                    user = result;
+                    done();
+                });
+            });
+
+            it("returns the matching user", function (done) {
+                User.get_by_username(user_args.username, function (err, result) {
+                    assert.ifError(err);
+                    assert.deepEqual(result, user);
+                    done();
+                });
+            });
+        });
+    });
+
+    describe("get_by_email()", function () {
+        var user;
+
+        context("when user does not exist", function () {
+            it("calls back with ResourceNotFound error", function (done) {
+                User.get_by_email(user_args.email, function (err) {
+                    assert.equal(err.restCode, 'ResourceNotFound');
+                    done();
+                });
+            });
+        });
+
+        context("when user exists", function () {
+            beforeEach(function (done) {
+                User.create(user_args, function (err, result) {
+                    assert.ifError(err);
+                    user = result;
+                    done();
+                });
+            });
+
+            it("returns the matching user", function (done) {
+                User.get_by_email(user_args.email, function (err, result) {
+                    assert.ifError(err);
+                    assert.deepEqual(result, user);
                     done();
                 });
             });

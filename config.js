@@ -14,10 +14,9 @@ module.exports = {
         couchbase: {
             connection: {
                 host: 'localhost:8091',
-                //user: 'Administrator',
-                //password: 'password',
                 bucket: 'default',
             },
+            key_prefix: 'cb_example',
             views: {
                 'default': {
                     users: {
