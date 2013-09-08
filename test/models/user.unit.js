@@ -102,14 +102,30 @@ describe("User model", function () {
 
         context("uniqueneness constraints", function () {
             context("when email already taken by another user", function () {
-                it("calls back with ResourceAlreadyExists", function (done) {
-                    User.create(user_args, function (err) {
-                        assert.ifError(err);
-                        user_args.username = support.random.string();
+                beforeEach(function (done) {
+                    User.create(user_args, done);
+                });
 
-                        User.create(user_args, function (err) {
-                            assert.equal(err.restCode, 'ResourceAlreadyExists');
-                            assert.ok(err.message.match(/email/));
+                it("calls back with ResourceAlreadyExists", function (done) {
+                    user_args.username = support.random.string();
+
+                    User.create(user_args, function (err) {
+                        assert.equal(err.restCode, 'ResourceAlreadyExists');
+                        assert.ok(err.message.match(/email/));
+                        done();
+                    });
+                });
+
+                it("doesn't leave dangling references", function (done) {
+                    user_args.username = support.random.string();
+
+                    User.create(user_args, function (err) {
+                        assert.ok(err);
+                        var username_key = User._make_key('username', user_args.username);
+
+                        couchbase.get(username_key, function (err, result) {
+                            assert.ifError(err);
+                            assert.strictEqual(result, null);
                             done();
                         });
                     });
@@ -117,14 +133,30 @@ describe("User model", function () {
             });
 
             context("when username already taken by another user", function () {
-                it("calls back with ResourceAlreadyExists", function (done) {
-                    User.create(user_args, function (err) {
-                        assert.ifError(err);
-                        user_args.email = support.random.email();
+                beforeEach(function (done) {
+                    User.create(user_args, done);
+                });
 
-                        User.create(user_args, function (err) {
-                            assert.equal(err.restCode, 'ResourceAlreadyExists');
-                            assert.ok(err.message.match(/username/));
+                it("calls back with ResourceAlreadyExists", function (done) {
+                    user_args.email = support.random.email();
+
+                    User.create(user_args, function (err) {
+                        assert.equal(err.restCode, 'ResourceAlreadyExists');
+                        assert.ok(err.message.match(/username/));
+                        done();
+                    });
+                });
+
+                it("doesn't leave dangling references", function (done) {
+                    user_args.email = support.random.email();
+
+                    User.create(user_args, function (err) {
+                        assert.ok(err);
+                        var email_key = User._make_key('email', user_args.email);
+
+                        couchbase.get(email_key, function (err, result) {
+                            assert.ifError(err);
+                            assert.strictEqual(result, null);
                             done();
                         });
                     });
