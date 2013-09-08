@@ -1,5 +1,6 @@
 var assert = require('assert');
 var sinon = require('sinon');
+var async = require('async');
 var support = require('../support');
 var User = main.models.User;
 var couchbase = main.couchbase.client(main.settings.couchbase.connection);
@@ -298,7 +299,7 @@ describe("User model", function () {
             it("bubbles up that error", function (done) {
                 var fake_err = support.fake_error();
 
-                sinon.stub(couchbase, 'set', function (key, args, cb) {
+                sinon.stub(couchbase, 'set', function (key, args, meta, cb) {
                     cb(fake_err);
                 });
 
@@ -306,6 +307,88 @@ describe("User model", function () {
                     assert.equal(err, fake_err);
                     couchbase.set.restore();
                     done();
+                });
+            });
+        });
+
+        context("when updating the same user multiple times, simultaneously", function () {
+            it("the correct values should be saved each time", function (done) {
+                var nbr_of_runs = 10;
+                var runs = [];
+
+                for (var i = 0; i < nbr_of_runs; i++) {
+                    runs.push(i);
+                }
+
+                async.eachSeries(runs, function (run, async_cb) {
+                    var username = support.random.string();
+                    var email = support.random.email();
+
+                    async.parallel({
+                        update_username: function (parallel_cb) {
+                            var args = support.shallow_clone(update_args);
+                            args.username = username;
+                            User.update(args, parallel_cb);
+                        },
+
+                        update_email: function (parallel_cb) {
+                            var args = support.shallow_clone(update_args);
+                            args.email = email;
+                            User.update(args, parallel_cb);
+                        },
+                    }, function (err) {
+                        if (err) { return async_cb(err); }
+
+                        User.get({id: user.id}, function (err, updated_user) {
+                            assert.ifError(err);
+                            assert.equal(updated_user.username, username);
+                            assert.equal(updated_user.email, email);
+                            async_cb();
+                        });
+                    });
+                }, done);
+            });
+
+            context("when we run out of CAS retries", function () {
+                var orig_retries = User.CAS_RETRIES;
+
+                beforeEach(function () {
+                    User.CAS_RETRIES = 0;
+                });
+
+                afterEach(function () {
+                    User.CAS_RETRIES = orig_retries;
+                });
+
+                it("calls back with a 'too many failed retries' error", function (done) {
+                    var nbr_of_runs = 5;
+                    var runs = [];
+
+                    for (var i = 0; i < nbr_of_runs; i++) {
+                        runs.push(i);
+                    }
+
+                    async.eachSeries(runs, function (run, async_cb) {
+                        var username = support.random.string();
+                        var email = support.random.email();
+
+                        async.parallel({
+                            update_username: function (parallel_cb) {
+                                var args = support.shallow_clone(update_args);
+                                args.username = username;
+                                User.update(args, parallel_cb);
+                            },
+
+                            update_email: function (parallel_cb) {
+                                var args = support.shallow_clone(update_args);
+                                args.email = email;
+                                User.update(args, parallel_cb);
+                            },
+                        }, async_cb);
+                    }, function (err) {
+                        assert.ok(err.message.match(/too many failed retries/i));
+                        done();
+                    });
                 });
             });
         });

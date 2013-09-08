@@ -96,7 +96,7 @@ describe("lib/couchbase/client.js",  function () {
                 fake_err = support.fake_error();
 
                 var fake_conn = {
-                    set: function (key, value, cb) {
+                    set: function (key, value, meta, cb) {
                         cb(fake_err);
                     },
 
@@ -116,6 +116,27 @@ describe("lib/couchbase/client.js",  function () {
                 couchbase.set(key, val, function (err) {
                     assert.equal(err, fake_err);
                     done();
+                });
+            });
+        });
+
+        context("when checking CAS", function () {
+            context("and CAS changes", function () {
+                it("calls back with an error", function (done) {
+                    couchbase.set(key, val, function (err, first_meta) {
+                        assert.ifError(err);
+                        var new_val = support.random.string();
+
+                        couchbase.set(key, new_val, function (err) {
+                            assert.ifError(err);
+                            var new_val2 = support.random.string();
+
+                            couchbase.set(key, new_val2, first_meta, function (err) {
+                                assert.equal(err.code, couchbase.CAS_ERROR_CODE);
+                                done();
+                            });
+                        });
+                    });
                 });
             });
         });
@@ -173,10 +194,10 @@ describe("lib/couchbase/client.js",  function () {
                 couchbase.set(key, val, done);
             });
 
-            it("returns null", function (done) {
+            it("returns meta data", function (done) {
                 couchbase.del(key, function (err, result) {
                     assert.ifError(err);
-                    assert.strictEqual(result, null);
+                    assert.ok(result.cas);
                     done();
                 });
             });
@@ -227,10 +248,10 @@ describe("lib/couchbase/client.js",  function () {
         });
 
         context("when record does not exist", function () {
-            it("returns null", function (done) {
+            it("returns empty meta object", function (done) {
                 couchbase.del(key, function (err, result) {
                     assert.ifError(err);
-                    assert.strictEqual(result, null);
+                    assert.deepEqual(result, {});
                     done();
                 });
             });

@@ -65,7 +65,7 @@ describe("Feature: User updating", function () {
         });
     });
 
-    context.skip("Scenario: Updating the same user multiple times, simultaneously", function () {
+    context("Scenario: Updating the same user multiple times, simultaneously", function () {
         before(function (done) {
             params = valid_params();
 
