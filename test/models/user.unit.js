@@ -479,7 +479,7 @@ describe("User model", function () {
 
         context("when updating the same user multiple times, simultaneously", function () {
             it("the correct values should be saved each time", function (done) {
-                var nbr_of_runs = 10;
+                var nbr_of_runs = 2;
                 var runs = [];
 
                 for (var i = 0; i < nbr_of_runs; i++) {
@@ -509,7 +509,21 @@ describe("User model", function () {
                             assert.ifError(err);
                             assert.equal(updated_user.username, username);
                             assert.equal(updated_user.email, email);
-                            async_cb();
+
+                            // Make sure no dangling reference docs were left behind.
+                            var orig_username_key = User._make_key('username', user.username);
+                            var orig_email_key = User._make_key('email', user.email);
+
+                            couchbase.get(orig_username_key, function (err, result) {
+                                assert.ifError(err);
+                                assert.strictEqual(result, null);
+
+                                couchbase.get(orig_email_key, function (err, result) {
+                                    assert.ifError(err);
+                                    assert.strictEqual(result, null);
+                                    async_cb();
+                                });
+                            });
                         });
                     });
                 }, done);
