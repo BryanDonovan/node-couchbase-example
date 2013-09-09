@@ -32,9 +32,10 @@ describe("User model", function () {
     });
 
     describe("instantiating", function () {
-        it("lets us set a username", function () {
+        it("lets us set a username and email", function () {
             var user = new User(user_args);
             assert.strictEqual(user.username, user_args.username);
+            assert.strictEqual(user.email, user_args.email);
         });
 
         it("lets us set an id and casts it to a string", function () {
