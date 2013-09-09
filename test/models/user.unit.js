@@ -11,12 +11,38 @@ function assert_no_dangling_references(user, cb) {
 
     couchbase.get(username_key, function (err, result) {
         assert.ifError(err);
-        assert.strictEqual(result, null);
+        var msg = "Expected username_key to have been deleted: " + username_key;
+        assert.strictEqual(result, null, msg);
 
         couchbase.get(email_key, function (err, result) {
             assert.ifError(err);
             assert.strictEqual(result, null);
+            var msg = "Expected email_key to have been deleted: " + email_key;
+            assert.strictEqual(result, null, msg);
             cb();
+        });
+    });
+}
+
+function assert_references_exist(user, cb) {
+    User.get(user, function (err, user) {
+        assert.ifError(err);
+        var username_key = User._make_key('username', user.username);
+        var email_key = User._make_key('email', user.email);
+
+        couchbase.get(username_key, function (err, result) {
+            assert.ifError(err);
+            var msg = "Expected username_key to exist: " + username_key;
+            assert.ok(result && result.value, msg);
+            assert.strictEqual(result.value, user.id, msg);
+
+            couchbase.get(email_key, function (err, result) {
+                assert.ifError(err);
+                var msg = "Expected email_key to exist: " + email_key;
+                assert.ok(result && result.value, msg);
+                assert.strictEqual(result.value, user.id, msg);
+                cb();
+            });
         });
     });
 }
@@ -119,8 +145,18 @@ describe("User model", function () {
 
         context("uniqueneness constraints", function () {
             context("when email already taken by another user", function () {
+                var user;
+
                 beforeEach(function (done) {
-                    User.create(user_args, done);
+                    User.create(user_args, function (err, result) {
+                        assert.ifError(err);
+                        user = result;
+                        done();
+                    });
+                });
+
+                afterEach(function (done) {
+                    User.destroy({id: user.id}, done);
                 });
 
                 it("calls back with ResourceAlreadyExists", function (done) {
@@ -150,8 +186,18 @@ describe("User model", function () {
             });
 
             context("when username already taken by another user", function () {
+                var user;
+
                 beforeEach(function (done) {
-                    User.create(user_args, done);
+                    User.create(user_args, function (err, result) {
+                        assert.ifError(err);
+                        user = result;
+                        done();
+                    });
+                });
+
+                afterEach(function (done) {
+                    User.destroy({id: user.id}, done);
                 });
 
                 it("calls back with ResourceAlreadyExists", function (done) {
@@ -270,6 +316,10 @@ describe("User model", function () {
                 });
             });
 
+            afterEach(function (done) {
+                User.destroy(user, done);
+            });
+
             it("returns the matching user", function (done) {
                 User.get_by_username(user_args.username, function (err, result) {
                     assert.ifError(err);
@@ -299,6 +349,10 @@ describe("User model", function () {
                     user = result;
                     done();
                 });
+            });
+
+            afterEach(function (done) {
+                User.destroy(user, done);
             });
 
             it("returns the matching user", function (done) {
@@ -483,7 +537,7 @@ describe("User model", function () {
 
         context("when making multiple simultaneous updates to a user", function () {
             it("the correct values should be saved each time", function (done) {
-                var nbr_of_runs = 10;
+                var nbr_of_runs = 5;
                 var runs = [];
 
                 for (var i = 0; i < nbr_of_runs; i++) {
@@ -532,7 +586,7 @@ describe("User model", function () {
                 });
 
                 it("calls back with a 'too many failed retries' error", function (done) {
-                    var nbr_of_runs = 5;
+                    var nbr_of_runs = 1;
                     var runs = [];
 
                     for (var i = 0; i < nbr_of_runs; i++) {
@@ -558,7 +612,7 @@ describe("User model", function () {
                         }, async_cb);
                     }, function (err) {
                         assert.ok(err.message.match(/too many failed retries/i));
-                        done();
+                        assert_references_exist(user, done);
                     });
                 });
             });
