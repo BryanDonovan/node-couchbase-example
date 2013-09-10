@@ -1,3 +1,6 @@
+- 0.0.6 2013-09-09
+  - Adding User.get_multi().
+
 - 0.0.5 2013-09-09
   - Enforcing unique constraints via creating reference docs for usernames and emails.
 

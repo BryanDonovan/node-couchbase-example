@@ -47,14 +47,18 @@ function assert_references_exist(user, cb) {
     });
 }
 
+function get_user_args() {
+    return {
+        username: support.random.string(),
+        email: support.random.email()
+    };
+}
+
 describe("User model", function () {
     var user_args;
 
     beforeEach(function () {
-        user_args = {
-            username: support.random.string(),
-            email: support.random.email()
-        };
+        user_args = get_user_args();
     });
 
     describe("instantiating", function () {
@@ -359,6 +363,114 @@ describe("User model", function () {
                 User.get_by_email(user_args.email, function (err, result) {
                     assert.ifError(err);
                     assert.deepEqual(result, user);
+                    done();
+                });
+            });
+        });
+    });
+
+    describe("get_multi()", function () {
+        context("when users exist", function () {
+            var qty;
+            var users;
+
+            beforeEach(function (done) {
+                users = [];
+                qty = 10;
+                var created_qty = 0;
+
+                function all_done() {
+                    return created_qty === qty;
+                }
+
+                async.until(all_done, function (async_cb) {
+                    user_args = get_user_args();
+                    User.create(user_args, function (err, result) {
+                        if (err) { return async_cb(err); }
+                        users.push(result);
+                        created_qty += 1;
+                        async_cb();
+                    });
+                }, done);
+            });
+
+            afterEach(function (done) {
+                async.each(users, function (user, async_cb) {
+                    User.destroy(user, async_cb);
+                }, done);
+            });
+
+            it("returns an array of user records in the requested order", function (done) {
+                var user_ids = users.map(function (user) { return user.id; });
+                User.get_multi({ids: user_ids}, function (err, result) {
+                    assert.ifError(err);
+                    assert.ok(result);
+                    result.forEach(function (user) {
+                        assert.ok(user instanceof User);
+                    });
+
+                    var actual_ids = result.map(function (user) { return user.id; });
+                    assert.deepEqual(actual_ids, user_ids);
+                    done();
+                });
+            });
+
+            context("when some ids found, others not found", function () {
+                it("calls back with the found objects", function (done) {
+                    var user_ids = users.map(function (user) { return user.id; });
+                    var ids = user_ids.slice(0, 2);
+                    var fake_id = support.random.number().toString();
+                    ids.push(fake_id);
+                    ids.push(user_ids[4]);
+                    var expected_ids = ids.filter(function (id) { return id !== fake_id; });
+
+                    User.get_multi({ids: ids}, function (err, result) {
+                        assert.ifError(err);
+                        var actual_ids = result.map(function (row) { return row.id; });
+                        var msg = "\nExpected: " + JSON.stringify(expected_ids) +
+                            "\nGot: " + JSON.stringify(actual_ids);
+                        assert.deepEqual(actual_ids, expected_ids, msg);
+                        done();
+                    });
+                });
+            });
+        });
+
+        context("when couchbase client.get_multi() calls back with an error", function () {
+            it("bubbles up that error", function (done) {
+                var fake_err = support.fake_error();
+
+                sinon.stub(couchbase, 'get_multi', function (args, cb) {
+                    cb(fake_err);
+                });
+
+                var fake_id = support.random.number().toString();
+
+                User.get_multi({ids: [fake_id]}, function (err) {
+                    assert.equal(err, fake_err);
+                    couchbase.get_multi.restore();
+                    done();
+                });
+            });
+        });
+
+        context("when ids not provided", function () {
+            it("calls back with MissingParameter error", function (done) {
+                User.get_multi({}, function (err) {
+                    assert.equal(err.restCode, 'MissingParameter');
+                    assert.ok(err.message.match(/ids/i));
+                    done();
+                });
+            });
+        });
+
+        context("when no ids found", function () {
+            it("calls back with an empty array", function (done) {
+                var fake_id = support.random.number().toString();
+
+                User.get_multi({ids: [fake_id]}, function (err, result) {
+                    assert.ifError(err);
+                    assert.deepEqual(result, []);
                     done();
                 });
             });
